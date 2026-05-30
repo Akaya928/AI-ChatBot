@@ -61,3 +61,23 @@ app.post('/api/logs/clear', (r,s) => { try { fs.writeFileSync(BOT_LOG, '', 'utf8
 });
 
 app.listen(PORT, () => console.log(`[Panel] http://localhost:${PORT}`));
+
+// NapCat watchdog: daily refresh at 4am + 5-min health check
+setInterval(() => {
+  const now = new Date();
+  const is4am = now.getHours() === 4 && now.getMinutes() === 0;
+  checkNapCat().then(n => {
+    if (!n.qq || is4am) {
+      const reason = is4am ? "定时刷新" : "检测到QQ离线，自动拉起";
+      console.log(`[Watchdog] ${reason}`);
+      exec('taskkill /f /im QQ.exe 2>nul & taskkill /f /im NapCatWinBootMain.exe 2>nul', () => {
+        setTimeout(() => {
+          spawn(path.join(NAPCAT_DIR, 'NapCatWinBootMain.exe'), ['3813758946'], {
+            cwd: NAPCAT_DIR, detached: true, windowsHide: true, stdio: 'ignore'
+          }).unref();
+        }, 5000);
+      });
+    }
+  });
+}, 60000);
+
