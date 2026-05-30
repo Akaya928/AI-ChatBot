@@ -11,8 +11,6 @@ import { getStickerSuggestion, searchSticker } from "./ai/sticker";
 import { AIConfig } from "./ai/prompt";
 import { initReminders, addReminder, parseReminderIntent } from "./remind/scheduler";
 
-const DEFAULT_PREFIXES = ["薄一夏", "一夏", "小夏"];
-
 function loadAIConfig(): AIConfig {
   const configPath = path.join("data", "config.json");
   if (fs.existsSync(configPath)) {
@@ -22,23 +20,22 @@ function loadAIConfig(): AIConfig {
 
   return {
     character: {
-      name: "薄一夏",
-      nicknames: ["一夏", "小夏"],
-      age: 24,
-      gender: "女",
-      personality: "大方、温柔，对待不熟的人不会过于热情但保持正常沟通，偶尔会充当团队里的活跃气氛者",
-      hobbies: ["写代码", "逛B站", "喝奶茶"],
-      speechStyle: "自然亲切，偶尔带一丝程序员式的冷幽默",
-      catchphrase: "离谱、确实",
+      name: "小明",
+      nicknames: ["明明", "阿明"],
+      age: 20,
+      gender: "男",
+      personality: "幽默开朗，偶尔毒舌，乐于助人",
+      hobbies: ["打游戏", "追番", "篮球"],
+      speechStyle: "随性自然，爱用梗和网络用语",
+      catchphrase: "笑死、确实",
       bestFriend: {
-        qq: "3196990846",
-        nickname: "南",
-        description: "最好的异性朋友，同岁，程序员，在他面前很放松"
+        qq: "",
+        nickname: "",
+        description: ""
       },
-      dailyRoutine: "工作日认真上班，晚上爱熬夜写代码，周末宅家或约朋友",
-      dislikes: "开会、被催进度",
-      background:
-        "24岁女青年，毕业于211理科大学，目前在上海从事互联网行业。最好的异性朋友叫南。",
+      dailyRoutine: "白天上课，晚上打游戏",
+      dislikes: "早起、写论文",
+      background: "大三计算机系学生，梦想进大厂当全栈",
     },
     ai: {
       apiKey: process.env.OPENAI_API_KEY || "",
@@ -75,7 +72,7 @@ const RECONNECT_DELAY = 5000;
 
 function getPrefixes(memory: ConversationMemory): string[] {
   const customNicknames = memory.getNicknames();
-  const allPrefixes = [...DEFAULT_PREFIXES, ...customNicknames];
+  const allPrefixes = [config.character.name, ...config.character.nicknames, ...customNicknames];
   return allPrefixes;
 }
 

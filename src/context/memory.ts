@@ -76,7 +76,7 @@ export class ConversationMemory {
   getHistoryAsText(limit: number = 50): string {
     return this.shortTermHistory
       .slice(-limit)
-      .map((m) => `${m.role === "user" ? "用户" : "一夏"}: ${m.content}`)
+      .map((m) => `${m.role === "user" ? "用户" : "Bot"}: ${m.content}`)
       .join("\n");
   }
 

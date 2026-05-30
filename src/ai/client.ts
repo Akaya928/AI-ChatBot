@@ -154,7 +154,7 @@ export class AIChatClient {
       const historyText = historyMessages
         .map(
           (m) =>
-            `${m.role === "user" ? "用户" : "一夏"}: ${m.content}`
+            `${m.role === "user" ? "用户" : this.config.character.name}: ${m.content}`
         )
         .join("\n");
 
@@ -188,7 +188,7 @@ export class AIChatClient {
       const historyText = historyMessages
         .map(
           (m) =>
-            `${m.role === "user" ? "用户" : "一夏"}: ${m.content}`
+            `${m.role === "user" ? "用户" : this.config.character.name}: ${m.content}`
         )
         .join("\n");
 
