@@ -471,7 +471,19 @@ initReminders((userId, content) => {
       params: { user_id: Number(userId), message: content },
     }));
   }
-}, config.character.bestFriend?.qq);
+}, config.character.bestFriend?.qq, async (holiday: string): Promise<string> => {
+  const client = aiClient.rawClient();
+  const resp = await client.chat.completions.create({
+    model: config.ai.model,
+    messages: [
+      { role: "system", content: `你是${config.character.name}，${config.character.personality}。${config.character.speechStyle}。` },
+      { role: "user", content: `今天是${holiday}，你想给你最好的朋友${config.character.bestFriend?.nickname || ""}发一条节日祝福。请用你的语气写一条简短自然的祝福（30字以内），带一个表情符号。` }
+    ],
+    temperature: 0.9,
+    max_tokens: 80,
+  });
+  return resp.choices[0]?.message?.content || `🎉 ${holiday}快乐！`;
+});
 
 connectWebSocket();
 

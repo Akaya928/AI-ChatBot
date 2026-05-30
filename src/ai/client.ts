@@ -28,6 +28,10 @@ export class AIChatClient {
     this.config = config;
   }
 
+  rawClient(): OpenAI {
+    return this.client;
+  }
+
   async chat(
     memory: ConversationMemory,
     userMessage: string,

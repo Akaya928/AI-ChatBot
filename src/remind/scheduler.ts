@@ -17,13 +17,19 @@ const SAVE_PATH = path.join(process.cwd(), "data", "reminders.json");
 let reminders: Reminder[] = [];
 let scannerInterval: ReturnType<typeof setInterval> | null = null;
 let sendCallback: ((userId: string, content: string) => void) | null = null;
+let greetCallback: ((holiday: string) => Promise<string>) | null = null;
 
-export function initReminders(onSend: (userId: string, content: string) => void, bestFriendQQ?: string): void {
+export function initReminders(
+  onSend: (userId: string, content: string) => void,
+  bestFriendQQ?: string,
+  onGreet?: (holiday: string) => Promise<string>
+): void {
   sendCallback = onSend;
+  greetCallback = onGreet || null;
   load();
   startScanner();
 
-  if (bestFriendQQ) {
+  if (bestFriendQQ && onGreet) {
     const holiday = getTodayHoliday();
     if (holiday) {
       const now = new Date();
@@ -33,23 +39,9 @@ export function initReminders(onSend: (userId: string, content: string) => void,
           r.userId === bestFriendQQ && r.content.includes("节日祝福") && !r.notified
         );
         if (!exists) {
-          const greetings: Record<string, string> = {
-            "元旦": "新年快乐！新的一年一起加油鸭~ 🎉",
-            "春节": "春节快乐！新年大吉，万事如意！🧧",
-            "情人节": "情人节快乐~虽然今天应该跟喜欢的人在一起，但我先来祝福一下！💕",
-            "元宵节": "元宵节快乐！记得吃汤圆哦，团团圆圆~ 🏮",
-            "愚人节": "愚人节快乐！今天说的话我可不敢全信哈哈~ 😝",
-            "劳动节": "劳动节快乐！打工人的节日，好好休息~ 🛌",
-            "端午节": "端午节快乐！粽子吃了吗？甜的还是咸的？🐲",
-            "七夕": "七夕快乐~牛郎织女都相会了，你呢？✨",
-            "中秋节": "中秋快乐！月圆人团圆，今晚赏月别忘了吃月饼~ 🥮",
-            "国庆节": "国庆快乐！七天长假爽不爽？🇨🇳",
-            "万圣节": "万圣节快乐！不给糖就捣蛋~ 🎃",
-            "圣诞节": "圣诞快乐！Merry Christmas~ 🎄",
-            "跨年夜": "跨年夜快乐！新的一年要更好哦~ 🌟",
-          };
-          const msg = greetings[holiday] || `🎉 ${holiday}快乐！今天要开心哦~`;
-          addReminder(bestFriendQQ, msg, target.getTime());
+          onGreet(holiday).then(msg => {
+            addReminder(bestFriendQQ, msg, target.getTime());
+          });
         }
       }
     }
