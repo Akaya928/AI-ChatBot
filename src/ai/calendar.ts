@@ -57,7 +57,17 @@ export function getDateContext(): string {
   const d = now.getDate();
   const weekday = ["日", "一", "二", "三", "四", "五", "六"][now.getDay()];
 
-  let text = `${y}年${m}月${d}日 周${weekday}`;
+  const hh = String(now.getHours()).padStart(2, "0");
+  const mm = String(now.getMinutes()).padStart(2, "0");
+  let text = `${y}年${m}月${d}日 周${weekday} ${hh}:${mm}`;
+
+  const hour = now.getHours();
+  if (hour >= 0 && hour < 6) text += " 深夜";
+  else if (hour < 9) text += " 清晨";
+  else if (hour < 12) text += " 上午";
+  else if (hour < 14) text += " 中午";
+  else if (hour < 18) text += " 下午";
+  else text += " 晚上";
 
   const fixedHolidays = HOLIDAYS.filter(h => !h.lunar && h.month === m && h.day === d);
   for (const h of fixedHolidays) {
