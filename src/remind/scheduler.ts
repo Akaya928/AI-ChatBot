@@ -33,7 +33,8 @@ export function initReminders(onSend: (userId: string, content: string) => void,
           r.userId === bestFriendQQ && r.content.includes("节日祝福") && !r.notified
         );
         if (!exists) {
-          addReminder(bestFriendQQ, `节日祝福：今天是${holiday}，记得给好朋友发个祝福哦~`, target.getTime());
+          const greetings = `🎉 ${holiday}快乐！今天要开心哦~`;
+          addReminder(bestFriendQQ, greetings, target.getTime());
         }
       }
     }
