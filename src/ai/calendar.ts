@@ -17,22 +17,39 @@ const SOLAR_HOLIDAYS: Holiday[] = [
   { month: 4, day: 22, name: "世界地球日" },
   { month: 5, day: 1, name: "劳动节" },
   { month: 5, day: 4, name: "青年节" },
-  { month: 5, day: 12, name: "母亲节" },
   { month: 5, day: 20, name: "520情人节" },
   { month: 6, day: 1, name: "儿童节" },
-  { month: 6, day: 15, name: "父亲节" },
-  { month: 6, day: 18, name: "618购物节" },
   { month: 7, day: 1, name: "建党节" },
   { month: 8, day: 1, name: "建军节" },
   { month: 9, day: 10, name: "教师节" },
   { month: 10, day: 1, name: "国庆节" },
   { month: 10, day: 31, name: "万圣节" },
   { month: 11, day: 11, name: "双十一" },
-  { month: 11, day: 27, name: "感恩节" },
   { month: 12, day: 24, name: "平安夜" },
   { month: 12, day: 25, name: "圣诞节" },
   { month: 12, day: 31, name: "跨年夜" },
 ];
+
+interface FloatingHoliday {
+  month: number;
+  weekOfMonth: number;
+  dayOfWeek: number;
+  name: string;
+}
+
+const FLOATING_HOLIDAYS: FloatingHoliday[] = [
+  { month: 5, weekOfMonth: 2, dayOfWeek: 0, name: "母亲节" },
+  { month: 6, weekOfMonth: 3, dayOfWeek: 0, name: "父亲节" },
+  { month: 11, weekOfMonth: 4, dayOfWeek: 4, name: "感恩节" },
+];
+
+function getFloatingDate(now: Date, h: FloatingHoliday): number | null {
+  const firstDay = new Date(now.getFullYear(), h.month - 1, 1).getDay();
+  const offset = (h.dayOfWeek - firstDay + 7) % 7;
+  const target = 1 + offset + (h.weekOfMonth - 1) * 7;
+  if (target > 31) return null;
+  return target;
+}
 
 const LUNAR_HOLIDAYS: { month: number; day: number; name: string }[] = [
   { month: 12, day: 8, name: "腊八节" },
@@ -56,6 +73,11 @@ export function getTodayHoliday(): string | null {
 
   for (const h of SOLAR_HOLIDAYS) {
     if (h.month === m && h.day === d) return h.name;
+  }
+
+  for (const h of FLOATING_HOLIDAYS) {
+    const target = getFloatingDate(now, h);
+    if (target === d) return h.name;
   }
 
   try {
@@ -88,6 +110,13 @@ export function getDateContext(): string {
 
   for (const h of SOLAR_HOLIDAYS) {
     if (h.month === m && h.day === d) {
+      text += `，今天是${h.name}`;
+    }
+  }
+
+  for (const h of FLOATING_HOLIDAYS) {
+    const target = getFloatingDate(now, h);
+    if (target === d) {
       text += `，今天是${h.name}`;
     }
   }
