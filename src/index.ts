@@ -174,6 +174,10 @@ interface OneBotMessage {
   time?: number;
 }
 
+function ts(msg: string): void {
+  console.log(`[${new Date().toLocaleTimeString("zh-CN", {hour12:false})}] ${msg}`);
+}
+
 async function handleMessage(data: OneBotMessage): Promise<void> {
   try {
     const messageType = data.message_type;
@@ -208,7 +212,7 @@ async function handleMessage(data: OneBotMessage): Promise<void> {
     } else {
       isAddressed = true;
       userMessage = text;
-      console.log(`[Private] 用户${userId} 消息:${userMessage}`);
+      ts(`[Private] 用户${userId} 消息:${userMessage}`);
     }
 
     if (!userMessage || userMessage.trim().length === 0) {
@@ -253,7 +257,7 @@ async function handleMessage(data: OneBotMessage): Promise<void> {
     detectAndStoreNickname(userMessage, memory);
 
     const emotionResult = await analyze(userMessage);
-    console.log(`[Emotion] 情绪: ${emotionResult.emotion} (${emotionResult.description})`);
+    ts(`[Emotion] 情绪: ${emotionResult.emotion} (${emotionResult.description})`);
 
     const result = await aiClient.chat(memory, userMessage, imageDescription);
 
@@ -268,12 +272,12 @@ async function handleMessage(data: OneBotMessage): Promise<void> {
       finalReply = pickFaceForResponse(emotionResult.emotion, finalReply);
     }
 
-    console.log(`[Reply] 回复: ${finalReply.substring(0, 100)}`);
+    ts(`[Reply] 回复: ${finalReply.substring(0, 100)}`);
 
     sendMessage(data, finalReply);
 
     if (result.sticker && config.bot.stickerSearchEnabled) {
-      console.log(`[Sticker] 贴纸: ${result.sticker.name}`);
+      ts(`[Sticker] 贴纸: ${result.sticker.name}`);
       sendSticker(data, result.sticker.path, result.sticker.name);
     }
   } catch (error: any) {
