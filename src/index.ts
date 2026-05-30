@@ -69,6 +69,7 @@ let reconnectTimer: NodeJS.Timeout | null = null;
 let reconnectAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = 50;
 const RECONNECT_DELAY = 5000;
+const processedMessages = new Set<string | number>();
 
 function getPrefixes(memory: ConversationMemory): string[] {
   const customNicknames = memory.getNicknames();
@@ -350,6 +351,9 @@ function connectWebSocket(): void {
       const data: any = JSON.parse(raw.toString());
 
       if (data.post_type === "message") {
+        if (processedMessages.has(data.message_id)) return;
+        processedMessages.add(data.message_id);
+        if (processedMessages.size > 1000) processedMessages.clear();
         handleMessage(data);
       }
 
