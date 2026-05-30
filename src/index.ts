@@ -325,6 +325,10 @@ function sendSticker(data: OneBotMessage, stickerPath: string, stickerName: stri
 }
 
 function connectWebSocket(): void {
+  if (ws) {
+    try { ws.removeAllListeners(); ws.close(); } catch {}
+    ws = null;
+  }
   console.log(`[Bot] 正在连接 WebSocket: ${WS_ENDPOINT}`);
 
   ws = new WebSocket(WS_ENDPOINT);
