@@ -1,7 +1,7 @@
 {
   "name": "aichatbot",
   "version": "1.0.0",
-  "description": "QQ鏅鸿兘鑱婂ぉ鏈哄櫒浜?,
+  "description": "AI ChatBot for QQ",
   "main": "dist/index.js",
   "scripts": {
     "dev": "ts-node -r dotenv/config src/index.ts",

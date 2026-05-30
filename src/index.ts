@@ -345,7 +345,7 @@ function connectWebSocket(): void {
     try {
       const data: any = JSON.parse(raw.toString());
 
-      if (data.post_type === "message" || data.post_type === "message_sent") {
+      if (data.post_type === "message") {
         handleMessage(data);
       }
 
