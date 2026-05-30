@@ -200,7 +200,9 @@ npm run build && node dist/index.js
 
 | 模块 | 方向 |
 |------|------|
+| 服务器部署 | Win VPS 全托管：NapCat 裸跑 + Bot/面板/数据库 Docker 容器化 |
 | 数据库 | data/*.json 迁移到 SQLite/PostgreSQL |
+| 全天在线 | 面板守护进程：每天凌晨 4 点刷新 QQ 登录态，离线自动拉起 |
 | 多 Bot | 一个面板管理多个 QQ 号 |
 | 统计看板 | 消息量、活跃时段、情感趋势、用户排行 |
 | 插件市场 | 天气查询、新闻推送、AI 绘画、翻译 |
