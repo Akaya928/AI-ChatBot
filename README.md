@@ -1,4 +1,4 @@
-# 薄一夏 — QQ AI ChatBot
+# AIChatBot
 
 基于 [NapCat](https://github.com/NapCatQQ/NapCat)（OneBot v11）+ DeepSeek API 的拟人化 QQ 聊天机器人，带 Web 管理面板。
 
