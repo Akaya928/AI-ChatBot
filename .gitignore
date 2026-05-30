@@ -1,0 +1,10 @@
+node_modules/
+dist/
+data/logs/
+data/config.json
+data/memory.json
+data/reminders.json
+.env
+*.vbs
+NapCat.Shell/
+开关/

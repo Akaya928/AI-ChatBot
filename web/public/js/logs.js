@@ -1,0 +1,1 @@
+const Logs={template:'#tpl-logs',data(){return{text:'',timer:null}},mounted(){this.load();this.timer=setInterval(this.load,5000)},beforeUnmount(){clearInterval(this.timer)},methods:{async load(){try{const d=await api.logs();this.text=d.lines.join('\n')}catch(e){}}}};
