@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 import { ConversationMemory } from "../context/memory";
 import { buildSystemPrompt, buildTopicSummaryPrompt, buildProfileExtractionPrompt, buildImageReplyPrompt, AIConfig } from "./prompt";
+import { getDateContext } from "./calendar";
 import { getFaceForEmotion, pickFaceForResponse } from "./emoji";
 import { getStickerSuggestion } from "./sticker";
 
@@ -73,7 +74,7 @@ export class AIChatClient {
       );
       messages.push(...historyMessages);
 
-      let finalMessage = userMessage;
+      let finalMessage = `[真实时间：${getDateContext()}] ${userMessage}`;
 
       if (userMessage.trim().length === 0 && imageDescription) {
         finalMessage = "[用户发送了一张图片，没有说话]";
