@@ -229,6 +229,12 @@ async function handleMessage(data: OneBotMessage): Promise<void> {
       return;
     }
 
+    if (userMessage === "reset" || userMessage === "/reset") {
+      memory.clearHistory();
+      sendMessage(data, "短时记忆已清空，画像保留不变，重新开始吧~");
+      return;
+    }
+
     const imageUrls = extractImageUrlsFromMessage(rawMessage);
     let imageDescription = "";
 

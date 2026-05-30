@@ -35,9 +35,18 @@ app.post('/api/config', (r,s) => { saveCfg({...loadCfg(),...r.body}); s.json({ok
 app.get('/api/logs', (r,s) => { try { s.json({lines:fs.readFileSync(BOT_LOG,'utf8').split('\n').slice(-200)}); } catch { s.json({lines:[]}); } });
 
 ['napcat','bot'].forEach(svc => {
-  app.post(`/api/actions/${svc}/start`, (r,s) => {
-    if (svc==='napcat') spawn(path.join(NAPCAT_DIR,'NapCatWinBootMain.exe'), ['3813758946'], {cwd:NAPCAT_DIR,detached:true,windowsHide:true,stdio:'ignore'}).unref();
-    else { const o=fs.openSync(BOT_LOG,'a'); spawn(NODE, ['-r','dotenv/config',BOT_MAIN], {cwd:ROOT,detached:true,windowsHide:true,stdio:['ignore',o,o]}).unref(); }
+  app.post(`/api/actions/${svc}/start`, async (r,s) => {
+    if (svc==='bot') {
+      const b = await checkBot();
+      if (b.running) return s.json({ok:true,msg:'Bot 已在运行'});
+      const o=fs.openSync(BOT_LOG,'a');
+      spawn(NODE, ['-r','dotenv/config',BOT_MAIN], {cwd:ROOT,detached:true,windowsHide:true,stdio:['ignore',o,o]}).unref();
+    }
+    if (svc==='napcat') {
+      const n = await checkNapCat();
+      if (n.qq) return s.json({ok:true,msg:'NapCat 已在运行'});
+      spawn(path.join(NAPCAT_DIR,'NapCatWinBootMain.exe'), ['3813758946'], {cwd:NAPCAT_DIR,detached:true,windowsHide:true,stdio:'ignore'}).unref();
+    }
     s.json({ok:true,msg:svc==='napcat'?'NapCat 正在启动...':'Bot 已启动'});
   });
   app.post(`/api/actions/${svc}/stop`, (r,s) => {
