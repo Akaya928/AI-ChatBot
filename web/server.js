@@ -33,6 +33,7 @@ app.get('/api/status', async (r,s) => { const [n,b] = await Promise.all([checkNa
 app.get('/api/config', (r,s) => s.json(loadCfg()));
 app.post('/api/config', (r,s) => { saveCfg({...loadCfg(),...r.body}); s.json({ok:true}); });
 app.get('/api/logs', (r,s) => { try { s.json({lines:fs.readFileSync(BOT_LOG,'utf8').split('\n').slice(-200)}); } catch { s.json({lines:[]}); } });
+app.post('/api/logs/clear', (r,s) => { try { fs.writeFileSync(BOT_LOG, '', 'utf8'); s.json({ok:true}); } catch { s.json({ok:false}); } });
 
 ['napcat','bot'].forEach(svc => {
   app.post(`/api/actions/${svc}/start`, async (r,s) => {

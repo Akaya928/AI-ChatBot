@@ -56,8 +56,13 @@
 </script>
 
 <script type="text/x-template" id="tpl-logs">
-<div><div class="page-header"><h2>日志</h2><p>Bot 运行日志，最近 200 行，每 5 秒刷新</p></div>
-<div class="card" style="padding:16px"><div class="log-viewer" v-if="text">{{text}}</div><div class="empty-state" v-else><div class="empty-icon">📄</div><p>暂无日志</p></div></div></div>
+<div><div class="page-header" style="display:flex;align-items:center;justify-content:space-between"><div><h2>日志</h2><p>最近 200 行，每 5 秒刷新</p></div><div style="display:flex;gap:8px"><button class="btn btn-ghost btn-sm" @click="download">下载</button><button class="btn btn-ghost btn-sm" @click="clear">清空</button></div></div>
+<div class="sys-bar">
+  <span class="sys-item"><span :class="'status-dot '+(status.napcat?'on pulse':'off')"></span> NapCat {{status.napcat?'在线':'离线'}}</span>
+  <span class="sys-item"><span :class="'status-dot '+(status.bot?'on pulse':'off')"></span> Bot {{status.bot?'运行中':'已停止'}}</span>
+  <span class="sys-item">{{status.napcat?'':status.bot?'':'⚠ 服务离线'}}</span>
+</div>
+<div class="card" style="padding:16px"><div class="log-viewer" v-if="html" v-html="html"></div><div class="empty-state" v-else><div class="empty-icon">📄</div><p>暂无日志</p></div></div></div>
 </script>
 
 <script src="/js/api.js"></script>

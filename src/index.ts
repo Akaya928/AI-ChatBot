@@ -175,7 +175,9 @@ interface OneBotMessage {
 }
 
 function ts(msg: string): void {
-  console.log(`[${new Date().toLocaleTimeString("zh-CN", {hour12:false})}] ${msg}`);
+  const d = new Date();
+  const ts = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}:${String(d.getSeconds()).padStart(2,"0")}`;
+  console.log(`[${ts}] ${msg}`);
 }
 
 async function handleMessage(data: OneBotMessage): Promise<void> {
@@ -410,8 +412,27 @@ function scheduleReconnect(): void {
     return;
   }
 
+  if (reconnectAttempts === 3) {
+    ts("[Bot] 连续断连3次，尝试自动重启NapCat...");
+    try {
+      const http = require("http");
+      const req = http.request({ hostname: "127.0.0.1", port: 5777, path: "/api/actions/napcat/start", method: "POST" }, (res: any) => {
+        res.on("data", () => {});
+        res.on("end", () => {
+          ts("[Bot] NapCat重启指令已发送，30秒后重新连接");
+          reconnectAttempts = 0;
+          setTimeout(() => connectWebSocket(), 30000);
+        });
+      });
+      req.on("error", () => {});
+      req.end();
+    } catch (e) {
+      ts("[Bot] NapCat自动重启失败");
+    }
+  }
+
   const delay = Math.min(RECONNECT_DELAY * reconnectAttempts, 60000);
-  console.log(`[Bot] 将在 ${delay / 1000}s 后尝试第 ${reconnectAttempts} 次重连...`);
+  ts(`[Bot] 将在 ${delay / 1000}s 后尝试第 ${reconnectAttempts} 次重连...`);
 
   reconnectTimer = setTimeout(() => {
     connectWebSocket();
@@ -420,15 +441,14 @@ function scheduleReconnect(): void {
 
 function handleNotice(data: any): void {
   const noticeType = data.notice_type;
-  console.log(`[Notice] ${noticeType}`);
+  if (noticeType === "notify") return;
 
   if (noticeType === "friend_add") {
-    console.log(`[Notice] 新好友添加: ${data.user_id}`);
-  }
-
-  if (noticeType === "group_increase") {
-    const userId = data.user_id;
-    console.log(`[Notice] 新成员入群: ${data.group_id} -> ${userId}`);
+    ts(`[Notice] 新好友添加: ${data.user_id}`);
+  } else if (noticeType === "group_increase") {
+    ts(`[Notice] 新成员入群: ${data.group_id} -> ${data.user_id}`);
+  } else if (noticeType === "group_decrease") {
+    ts(`[Notice] 成员离开群: ${data.group_id} -> ${data.user_id}`);
   }
 }
 
