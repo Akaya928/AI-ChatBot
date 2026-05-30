@@ -107,6 +107,63 @@
 - **DeepSeek API**：默认 AI 模型（可切换 GPT-4o 等）
 - **Node.js 20+** + TypeScript
 
+## 配置说明
+
+### 首次安装
+
+```bash
+npm install      # 安装依赖
+npm run build    # 编译 TypeScript
+```
+
+### 环境变量 `.env`
+
+```env
+# DeepSeek API（默认）
+OPENAI_API_KEY=sk-xxx
+OPENAI_BASE_URL=https://api.deepseek.com/v1
+AI_MODEL=deepseek-chat
+
+# QQ Bot 连接
+BOT_SELF_ID=3813758946
+BOT_WS_ENDPOINT=ws://127.0.0.1:6700
+```
+
+### 角色配置 `data/config.json`
+
+```json
+{
+  "character": {
+    "name": "薄一夏",
+    "age": 24,
+    "gender": "女",
+    "personality": "大方、温柔...",
+    "bestFriend": {
+      "qq": "3196990846",
+      "nickname": "南",
+      "description": "最好的异性朋友，同岁，程序员"
+    }
+  },
+  "ai": {
+    "apiKey": "sk-xxx",
+    "baseURL": "https://api.deepseek.com/v1",
+    "model": "deepseek-chat"
+  }
+}
+```
+
+> 也可通过 Web 面板「设置」页可视化编辑，保存后重启 Bot 生效。
+
+### NapCat 配置
+
+1. 确保 `NapCat.Shell/` 目录存在（含 `NapCatWinBootMain.exe` 和 QQ 客户端）
+2. 确保 OneBot WebSocket 服务器端口为 `6700`
+3. 首次启动需扫码登录，之后可用快速登录
+
+### 最好朋友绑定
+
+在 `config.json` 中设置 `character.bestFriend.qq` 为目标 QQ 号，Bot 自动识别：完全放松、颜文字随意用、好感永不衰减。
+
 ## 使用方式
 
 ```bash
