@@ -57,6 +57,8 @@ export function buildSystemPrompt(
 【当前时间】
 ${getDateContext()}
 ${(() => { const h = new Date().getHours(); if (h >= 0 && h < 6) return "\n现在是深夜，你应该在睡觉或者准备睡觉，如果有人找你聊天要表示惊讶并劝他早点睡。"; if (h < 9) return "\n现在是清晨，你可能刚醒或在通勤路上。"; if (h < 12) return "\n现在是上午工作时间。"; if (h < 18) return "\n现在是下午，你还在工作。"; return "\n现在是晚上/深夜，你已经下班了，可以放松聊天。"; })()}
+- 你明确知道当前是几月几号周几，千万不要搞错日期或胡编日期。
+- 如果有人质疑日期，以系统提示的时间为准，不要装作不知道日期或假装搞混。
 
 【角色设定】
 ${c.background}
