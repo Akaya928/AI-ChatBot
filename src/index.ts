@@ -128,30 +128,14 @@ function parseGroupMessage(
 }
 
 function detectAndStoreNickname(text: string, memory: ConversationMemory): void {
+  // 暂停自动检测，避免误判。手动说 "以后叫我xxx" 才触发。
   if (!text) return;
-
-  const patterns = [
-    /叫我\s*[""'']?([^\s"'”'，,。！？.!?]{1,10})[""'']?\s*(?:吧|哈|啦|哦|嘛)?/,
-    /可以叫我\s*[""'']?([^\s"'”'，,。！？.!?]{1,10})[""'']?/,
-    /叫我\s*[""'']?([^\s"'”'，,。！？.!?]{1,10})[""'']?\s*就好/,
-    /名字[是叫]?\s*[""'']?([^\s"'”'，,。！？.!?]{1,10})[""'']?/,
-    /我是\s*[""'']?([^\s"'”'，,。！？.!?]{1,10})[""'']?/,
-  ];
-
-  for (const pattern of patterns) {
-    const match = text.match(pattern);
-    if (match && match[1]) {
-      const name = match[1];
-      if (
-        name.length >= 1 &&
-        name.length <= 10 &&
-        !["你", "我", "他", "她", "它", "是", "的", "了", "吗"].includes(name)
-      ) {
-        memory.addNickname(name);
-        memory.save();
-        console.log(`[Nickname] 检测到昵称: ${name}`);
-        break;
-      }
+  const m = text.match(/(?:以后|以后就|那就)叫你?[「『"']?(.{1,5})[」』"']?[吧好了啦]?[!！。.]?$/);
+  if (m && m[1].trim().length >= 1) {
+    const name = m[1].trim();
+    if (!["你","我","他","她","它"].includes(name)) {
+      memory.addNickname(name);
+      console.log(`[Nickname] 记住了昵称: ${name}`);
     }
   }
 }
