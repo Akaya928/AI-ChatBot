@@ -198,7 +198,7 @@ async function handleMessage(data: OneBotMessage): Promise<void> {
     }
 
     const isGroup = messageType === "group";
-    const memory = getMemory(userId);
+    const memory = getMemory(userId, "data", userId === config.character.bestFriend?.qq);
 
     let userMessage: string;
     let isAddressed: boolean;
@@ -233,6 +233,9 @@ async function handleMessage(data: OneBotMessage): Promise<void> {
         }).join("、");
         userMessage = `（还艾特了：${names}）` + userMessage;
       }
+      if (atMentionHit) {
+        atOthersList = [userId, ...atOthersList];
+      }
       console.log(
         `[Group] 群${groupId} 用户${userId} 前缀:${parsed.matchedPrefix} 消息:${userMessage}`
       );
@@ -263,6 +266,12 @@ async function handleMessage(data: OneBotMessage): Promise<void> {
     if (userMessage === "reset" || userMessage === "/reset") {
       memory.clearHistory();
       sendMessage(data, "短时记忆已清空，画像保留不变，重新开始吧~");
+      return;
+    }
+
+    if (userMessage === "/reset nicknames") {
+      memory.clearNicknames();
+      sendMessage(data, "所有昵称已清空，现在只认配置里的名字~");
       return;
     }
 
@@ -340,8 +349,8 @@ function sendMessage(data: OneBotMessage, text: string, atOthers?: string[]): vo
 
   let messageText: any = text;
   if (isGroup && atOthers && atOthers.length > 0) {
-    const atPrefix = atOthers.map(qq => `[CQ:at,qq=${qq}]`).join("");
-    messageText = atPrefix + " " + text;
+    const atSegs = atOthers.map(qq => ({ type: "at", data: { qq } }));
+    messageText = [...atSegs, { type: "text", data: { text: " " + text } }];
   }
 
   const payload: any = {

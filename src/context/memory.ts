@@ -36,7 +36,10 @@ export class ConversationMemory {
   private deepConvCount: number = 0;
   private activeDays: string[] = [];
   private lastActive: number = 0;
+  private skipDecay: boolean = false;
   private savePath: string;
+
+  setSkipDecay(v: boolean): void { this.skipDecay = v; }
 
   constructor(userId: string, dataDir: string = "data") {
     this.userId = userId;
@@ -104,6 +107,10 @@ export class ConversationMemory {
     if (nickname && !this.nicknames.includes(nickname)) {
       this.nicknames.push(nickname);
     }
+  }
+
+  clearNicknames(): void {
+    this.nicknames = [];
   }
 
   private calcScore(skipDecay: boolean = false): number {
@@ -215,7 +222,7 @@ export class ConversationMemory {
       this.deepConvCount = data.deepConvCount || 0;
       this.activeDays = data.activeDays || [];
       this.lastActive = data.lastActive || 0;
-      console.log(`[Memory] 已加载用户 ${this.userId} 的记忆 (${this.messageCount} 条消息, 好感度 ${this.calcScore()})`);
+      console.log(`[Memory] 已加载用户 ${this.userId} 的记忆 (${this.messageCount} 条消息, 好感度 ${this.skipDecay ? 100 : this.calcScore()})`);
     } catch (err) {
       console.error("[Memory] 加载记忆失败:", err);
     }
@@ -224,9 +231,11 @@ export class ConversationMemory {
 
 let globalMemories: Map<string, ConversationMemory> = new Map();
 
-export function getMemory(userId: string, dataDir: string = "data"): ConversationMemory {
+export function getMemory(userId: string, dataDir: string = "data", isBestFriend: boolean = false): ConversationMemory {
   if (!globalMemories.has(userId)) {
-    globalMemories.set(userId, new ConversationMemory(userId, dataDir));
+    const mem = new ConversationMemory(userId, dataDir);
+    mem.setSkipDecay(isBestFriend);
+    globalMemories.set(userId, mem);
   }
   return globalMemories.get(userId)!;
 }
