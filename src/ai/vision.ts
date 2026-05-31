@@ -2,11 +2,19 @@ import OpenAI from "openai";
 
 let visionClient: OpenAI | null = null;
 
+let _config: any = {};
+
+export function initVisionClient(config: any): void {
+  _config = config;
+  visionClient = null;
+}
+
 export function getVisionClient(): OpenAI {
   if (!visionClient) {
+    const ai = _config.ai || {};
     visionClient = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY || "",
-      baseURL: process.env.OPENAI_BASE_URL || "https://api.deepseek.com/v1",
+      apiKey: ai.visionApiKey || process.env.VISION_API_KEY || process.env.OPENAI_API_KEY || "",
+      baseURL: ai.visionBaseURL || process.env.VISION_BASE_URL || "https://api.openai.com/v1",
     });
   }
   return visionClient;
@@ -94,20 +102,26 @@ export async function describeImageFromUrl(
   }
 }
 
-export function extractImageUrlsFromMessage(message: string): string[] {
+export function extractImageUrlsFromMessage(message: any): string[] {
   const urls: string[] = [];
 
-  const urlPattern = /https?:\/\/[^\s]+?\.(?:jpg|jpeg|png|gif|webp|bmp)(?:\?[^\s]*)?/gi;
-  const matches = message.match(urlPattern);
-  if (matches) {
-    urls.push(...matches);
+  if (typeof message === "string") {
+    const urlPattern = /https?:\/\/[^\s]+?\.(?:jpg|jpeg|png|gif|webp|bmp)(?:\?[^\s]*)?/gi;
+    const matches = message.match(urlPattern);
+    if (matches) urls.push(...matches);
+
+    const cqImagePattern = /\[CQ:image,file=[^,\]]*(?:,url=([^\]]+))?\]/gi;
+    let cqMatch: RegExpExecArray | null;
+    while ((cqMatch = cqImagePattern.exec(message)) !== null) {
+      if (cqMatch[1]) urls.push(cqMatch[1]);
+    }
   }
 
-  const cqImagePattern = /\[CQ:image,file=[^,\]]*(?:,url=([^\]]+))?\]/gi;
-  let cqMatch: RegExpExecArray | null;
-  while ((cqMatch = cqImagePattern.exec(message)) !== null) {
-    if (cqMatch[1]) {
-      urls.push(cqMatch[1]);
+  if (Array.isArray(message)) {
+    for (const seg of message) {
+      if (seg.type === "image" && seg.data?.url) {
+        urls.push(seg.data.url);
+      }
     }
   }
 
