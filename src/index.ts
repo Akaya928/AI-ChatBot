@@ -5,11 +5,13 @@ import * as path from "path";
 import { getMemory, saveAllMemories, saveMemoryPeriodically, ConversationMemory, getProfileByUserId } from "./context/memory";
 import { AIChatClient, createAIChatClient } from "./ai/client";
 import { analyze } from "./emotion/analyzer";
-import { describeImage, hasImageInMessage, extractImageUrlsFromMessage } from "./ai/vision";
+import { describeImage, hasImageInMessage, extractImageUrlsFromMessage, initVisionClient } from "./ai/vision";
 import { getFaceForEmotion, pickFaceForResponse } from "./ai/emoji";
 import { getStickerSuggestion, searchSticker } from "./ai/sticker";
 import { AIConfig } from "./ai/prompt";
-import { initReminders, addReminder, parseReminderIntent } from "./remind/scheduler";
+import { initReminders, addReminder } from "./remind/scheduler";
+import { registerSkill, runSkills } from "./skills/registry";
+import { reminderSkill } from "./skills/reminder";
 
 function loadAIConfig(): AIConfig {
   const configPath = path.join("data", "config.json");
@@ -59,6 +61,7 @@ function loadAIConfig(): AIConfig {
 }
 
 const config = loadAIConfig();
+initVisionClient(config);
 const aiClient = createAIChatClient(config);
 
 const WS_ENDPOINT = process.env.BOT_WS_ENDPOINT || "ws://127.0.0.1:6700";
@@ -233,17 +236,9 @@ async function handleMessage(data: OneBotMessage): Promise<void> {
       userMessage = config.bot.debugText || "你好呀";
     }
 
-    const reminderIntent = parseReminderIntent(userMessage);
-    if (reminderIntent) {
-      const dueAt = Date.now() + reminderIntent.minutes * 60 * 1000;
-      addReminder(userId, reminderIntent.content, dueAt, groupId || undefined);
-      const mins = reminderIntent.minutes;
-      let timeStr: string;
-      if (mins >= 10080) timeStr = `${Math.floor(mins / 10080)}周`;
-      else if (mins >= 1440) timeStr = `${Math.floor(mins / 1440)}天${mins % 1440 >= 60 ? `${Math.floor((mins % 1440) / 60)}小时` : ""}`;
-      else if (mins >= 60) timeStr = `${Math.floor(mins / 60)}小时${mins % 60 > 0 ? `${mins % 60}分钟` : ""}`;
-      else timeStr = `${mins}分钟`;
-      sendMessage(data, `好的，${timeStr}后提醒你：${reminderIntent.content}`);
+    const skillResult = await runSkills(userId, userMessage, groupId || undefined);
+    if (skillResult?.handled) {
+      sendMessage(data, skillResult.reply || "OK");
       return;
     }
 
@@ -260,6 +255,9 @@ async function handleMessage(data: OneBotMessage): Promise<void> {
     }
 
     const imageUrls = extractImageUrlsFromMessage(rawMessage);
+    if (imageUrls.length === 0 && messageArray) {
+      imageUrls.push(...extractImageUrlsFromMessage(messageArray));
+    }
     let imageDescription = "";
 
     if (imageUrls.length > 0) {
@@ -527,26 +525,29 @@ console.log(`  AI模型: ${config.ai.model}`);
 console.log(`  角色: ${config.character.name} (${config.character.age}岁 ${config.character.gender})`);
 console.log("========================================");
 
-initReminders((userId, content) => {
-  if (ws && ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify({
-      action: "send_private_msg",
-      params: { user_id: Number(userId), message: content },
-    }));
-  }
-}, config.character.bestFriend?.qq, async (holiday: string): Promise<string> => {
-  const client = aiClient.rawClient();
-  const resp = await client.chat.completions.create({
-    model: config.ai.model,
-    messages: [
-      { role: "system", content: `你是${config.character.name}，${config.character.personality}。${config.character.speechStyle}。` },
-      { role: "user", content: `今天是${holiday}，你想给你最好的朋友${config.character.bestFriend?.nickname || ""}发一条节日祝福。请用你的语气写一条简短自然的祝福（30字以内），带一个表情符号。` }
-    ],
-    temperature: 0.9,
-    max_tokens: 80,
+reminderSkill.init = () => {
+  initReminders((userId, content) => {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({
+        action: "send_private_msg",
+        params: { user_id: Number(userId), message: content },
+      }));
+    }
+  }, config.character.bestFriend?.qq, async (holiday: string): Promise<string> => {
+    const client = aiClient.rawClient();
+    const resp = await client.chat.completions.create({
+      model: config.ai.model,
+      messages: [
+        { role: "system", content: `你是${config.character.name}，${config.character.personality}。${config.character.speechStyle}。` },
+        { role: "user", content: `今天是${holiday}，你想给你最好的朋友${config.character.bestFriend?.nickname || ""}发一条节日祝福。请用你的语气写一条简短自然的祝福（30字以内），带一个表情符号。` }
+      ],
+      temperature: 0.9,
+      max_tokens: 80,
+    });
+    return resp.choices[0]?.message?.content || `🎉 ${holiday}快乐！`;
   });
-  return resp.choices[0]?.message?.content || `🎉 ${holiday}快乐！`;
-});
+};
+registerSkill(reminderSkill);
 
 connectWebSocket();
 

@@ -31,6 +31,9 @@
 │   │   └── analyzer.ts     # 17种情绪识别
 │   └── remind/
 │       └── scheduler.ts    # 定时提醒 + 节日祝福
+├── src/skills/              # 技能插件（v1.1+）
+│   ├── registry.ts          # 技能注册中心
+│   └── reminder.ts          # 提醒技能（示例）
 ├── web/                    # 控制面板（Vue3 + Vite + Express）
 │   ├── server.js           # Express API 服务
 │   ├── index.html          # Vite 入口

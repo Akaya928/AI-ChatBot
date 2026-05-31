@@ -23,6 +23,8 @@
     <div class="form-field"><label>讨厌的事</label><input class="input" v-model="form.dislikes" placeholder="用逗号分隔"></div></div>
     <div class="form-row"><div class="form-field"><label>API Key</label><input class="input" v-model="form.apiKey" type="password" placeholder="sk-..."></div>
     <div class="form-field"><label>API 端点</label><input class="input" v-model="form.baseURL"></div></div>
+    <div class="form-row"><div class="form-field"><label>视觉 API Key</label><input class="input" v-model="form.visionApiKey" type="password" placeholder="留空则复用上方Key"></div>
+    <div class="form-field"><label>视觉 API 端点</label><input class="input" v-model="form.visionBaseURL" placeholder="https://api.openai.com/v1"></div></div>
     <div class="form-actions"><button type="submit" class="btn btn-primary">保存</button><button type="button" class="btn btn-ghost" @click="reset">恢复默认</button></div>
     <div class="form-actions" style="padding-top:12px;border-top:1px solid var(--border);margin-top:4px">
       <button type="button" class="btn btn-ghost" @click="downloadJson">下载配置</button>
@@ -37,7 +39,7 @@
 import { reactive, onMounted } from 'vue'
 import { api, toast } from '../api.js'
 
-const form = reactive({ name:'',personality:'',speechStyle:'',catchphrase:'',hobbies:'',bestFriendNickname:'',bestFriendQQ:'',bestFriendDesc:'',dailyRoutine:'',dislikes:'',background:'',model:'deepseek-chat',apiKey:'',baseURL:'' })
+const form = reactive({ name:'',personality:'',speechStyle:'',catchphrase:'',hobbies:'',bestFriendNickname:'',bestFriendQQ:'',bestFriendDesc:'',dailyRoutine:'',dislikes:'',background:'',model:'deepseek-chat',apiKey:'',baseURL:'',visionApiKey:'',visionBaseURL:'' })
 
 onMounted(async () => {
   try {
@@ -58,6 +60,8 @@ onMounted(async () => {
     form.apiKey = (d.ai || {}).apiKey || ''
     form.baseURL = (d.ai || {}).baseURL || ''
     form.model = (d.ai || {}).model || 'deepseek-chat'
+    form.visionApiKey = (d.ai || {}).visionApiKey || ''
+    form.visionBaseURL = (d.ai || {}).visionBaseURL || ''
   } catch(e) {}
 })
 
@@ -79,6 +83,8 @@ async function save() {
     d.ai.apiKey = form.apiKey
     d.ai.baseURL = form.baseURL
     d.ai.model = form.model
+    d.ai.visionApiKey = form.visionApiKey
+    d.ai.visionBaseURL = form.visionBaseURL
     await api.saveConfig(d)
     toast('设置已保存，重启 Bot 生效', 'ok')
   } catch(e) { toast('保存失败', 'err') }
@@ -95,7 +101,7 @@ function reset() {
     bestFriendDesc:'最好的异性朋友，同岁，程序员，在他面前很放松',
     dailyRoutine:'工作日认真上班，晚上爱熬夜写代码，周末宅家或约朋友',
     dislikes:'开会、被催进度',
-    name:'薄一夏', model:'deepseek-chat', apiKey:'', baseURL:'https://api.deepseek.com/v1'
+    name:'薄一夏', model:'deepseek-chat', apiKey:'', baseURL:'https://api.deepseek.com/v1', visionApiKey:'', visionBaseURL:'https://api.openai.com/v1'
   })
   toast('已恢复默认，请点击保存', 'ok')
 }
@@ -120,6 +126,8 @@ function downloadJson() {
       apiKey: form.apiKey,
       baseURL: form.baseURL,
       model: form.model,
+      visionApiKey: form.visionApiKey,
+      visionBaseURL: form.visionBaseURL,
     },
   }
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
@@ -164,6 +172,8 @@ function uploadJson(e) {
       form.apiKey = ai.apiKey || ''
       form.baseURL = ai.baseURL || ''
       form.model = ai.model || 'deepseek-chat'
+      form.visionApiKey = ai.visionApiKey || ''
+      form.visionBaseURL = ai.visionBaseURL || ''
       toast('配置已加载，请点击保存', 'ok')
     } catch (err) { toast('JSON格式错误', 'err') }
   }
