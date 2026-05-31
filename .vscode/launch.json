@@ -1,0 +1,56 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Bot (ts-node)",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["-r", "ts-node/register", "-r", "dotenv/config"],
+      "args": ["src/index.ts"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "env": { "TS_NODE_PROJECT": "${workspaceFolder}/tsconfig.json" },
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Bot (compiled)",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/dist/index.js",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "preLaunchTask": "tsc: build",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Panel (Express)",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/web/server.js",
+      "cwd": "${workspaceFolder}/web",
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Panel (Vite dev)",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite", "--config", "vite.config.ts"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Bot + Panel 同时启动",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["concurrently", "-n", "bot,panel", "-c", "blue,magenta", "\"ts-node -r dotenv/config src/index.ts\"", "\"node web/server.js\""],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    }
+  ]
+}

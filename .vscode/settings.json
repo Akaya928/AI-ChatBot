@@ -1,0 +1,8 @@
+{
+  "editor.tabSize": 2,
+  "files.exclude": {
+    "dist": true,
+    "data/logs": true,
+    "node_modules": true
+  }
+}
