@@ -2,7 +2,7 @@ import "dotenv/config";
 import WebSocket from "ws";
 import * as fs from "fs";
 import * as path from "path";
-import { getMemory, saveAllMemories, saveMemoryPeriodically, ConversationMemory } from "./context/memory";
+import { getMemory, saveAllMemories, saveMemoryPeriodically, ConversationMemory, getProfileByUserId } from "./context/memory";
 import { AIChatClient, createAIChatClient } from "./ai/client";
 import { analyze } from "./emotion/analyzer";
 import { describeImage, hasImageInMessage, extractImageUrlsFromMessage } from "./ai/vision";
@@ -198,20 +198,43 @@ async function handleMessage(data: OneBotMessage): Promise<void> {
     }
 
     const isGroup = messageType === "group";
-    const memory = getMemory(userId);
+    const memory = getMemory(userId, "data", userId === config.character.bestFriend?.qq);
 
     let userMessage: string;
     let isAddressed: boolean;
+    let atOthersList: string[] = [];
 
     if (isGroup) {
-      const atMentionHit = BOT_SELF_ID && rawMessage.includes(`[CQ:at,qq=${BOT_SELF_ID}]`);
+      let atMentionHit = false;
+      if (BOT_SELF_ID) {
+        if (Array.isArray(data.message)) {
+          atMentionHit = data.message.some((seg: any) => seg.type === "at" && seg.data?.qq === BOT_SELF_ID);
+        } else {
+          atMentionHit = rawMessage.includes(`[CQ:at,qq=${BOT_SELF_ID}]`);
+        }
+      }
       const parsed = parseGroupMessage(text, memory);
       if (!parsed.isAddressed && !atMentionHit) return;
       isAddressed = true;
       if (atMentionHit && !parsed.isAddressed) {
-        userMessage = text.replace(/\[CQ:at,qq=\d+\]/g, "").trim();
+        userMessage = text.replace(/\s+/g, " ").trim();
       } else {
-        userMessage = parsed.strippedText;
+        userMessage = parsed.strippedText.replace(/\s+/g, " ").trim();
+      }
+      const otherAts = Array.isArray(data.message)
+        ? data.message.filter((seg: any) => seg.type === "at" && seg.data?.qq !== BOT_SELF_ID)
+        : [];
+      if (otherAts.length > 0) {
+        atOthersList = otherAts.map((seg: any) => seg.data.qq);
+        const names = otherAts.map((seg: any) => {
+          const qq = seg.data.qq;
+          if (qq === config.character.bestFriend?.qq) return config.character.bestFriend.nickname || qq;
+          return qq;
+        }).join("、");
+        userMessage = `（还艾特了：${names}）` + userMessage;
+      }
+      if (atMentionHit) {
+        atOthersList = [userId, ...atOthersList];
       }
       console.log(
         `[Group] 群${groupId} 用户${userId} 前缀:${parsed.matchedPrefix} 消息:${userMessage}`
@@ -246,6 +269,12 @@ async function handleMessage(data: OneBotMessage): Promise<void> {
       return;
     }
 
+    if (userMessage === "/reset nicknames") {
+      memory.clearNicknames();
+      sendMessage(data, "所有昵称已清空，现在只认配置里的名字~");
+      return;
+    }
+
     const imageUrls = extractImageUrlsFromMessage(rawMessage);
     let imageDescription = "";
 
@@ -266,7 +295,22 @@ async function handleMessage(data: OneBotMessage): Promise<void> {
     const emotionResult = await analyze(userMessage);
     ts(`[Emotion] 情绪: ${emotionResult.emotion} (${emotionResult.description})`);
 
-    const result = await aiClient.chat(memory, userMessage, imageDescription);
+    const qqInMsg = userMessage.match(/\d{5,11}/g);
+    let extraContext = "";
+    if (qqInMsg) {
+      const profiles: string[] = [];
+      for (const qq of qqInMsg) {
+        if (qq !== BOT_SELF_ID && qq !== userId) {
+          const theirProfile = getProfileByUserId(qq);
+          if (theirProfile) {
+            profiles.push(`你对${qq}的了解：${theirProfile}`);
+          }
+        }
+      }
+      if (profiles.length > 0) extraContext = profiles.join("\n");
+    }
+
+    const result = await aiClient.chat(memory, userMessage, imageDescription, extraContext || undefined);
 
     memory.recordTurn();
     if (emotionResult.confidence > 0.7) {
@@ -281,7 +325,7 @@ async function handleMessage(data: OneBotMessage): Promise<void> {
 
     ts(`[Reply] 回复: ${finalReply.substring(0, 100)}`);
 
-    sendMessage(data, finalReply);
+    sendMessage(data, finalReply, atOthersList);
 
     if (result.sticker && config.bot.stickerSearchEnabled) {
       ts(`[Sticker] 贴纸: ${result.sticker.name}`);
@@ -295,7 +339,7 @@ async function handleMessage(data: OneBotMessage): Promise<void> {
   }
 }
 
-function sendMessage(data: OneBotMessage, text: string): void {
+function sendMessage(data: OneBotMessage, text: string, atOthers?: string[]): void {
   if (!ws || ws.readyState !== WebSocket.OPEN) {
     console.warn("[Bot] WebSocket未连接，无法发送消息");
     return;
@@ -303,10 +347,16 @@ function sendMessage(data: OneBotMessage, text: string): void {
 
   const isGroup = data.message_type === "group";
 
+  let messageText: any = text;
+  if (isGroup && atOthers && atOthers.length > 0) {
+    const atSegs = atOthers.map(qq => ({ type: "at", data: { qq } }));
+    messageText = [...atSegs, { type: "text", data: { text: " " + text } }];
+  }
+
   const payload: any = {
     action: isGroup ? "send_group_msg" : "send_private_msg",
     params: {
-      message: text,
+      message: messageText,
     },
     echo: String(data.message_id || Date.now()),
   };

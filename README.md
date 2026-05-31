@@ -2,6 +2,16 @@
 
 基于 [NapCat](https://github.com/NapCatQQ/NapCat)（OneBot v11）+ DeepSeek API 的拟人化 QQ 聊天机器人，带 Web 管理面板。
 
+## 分支管理
+
+| 分支 | 版本 | 用途 |
+|------|------|------|
+| `main` | v1.0 | 生产正式版 |
+| `dev1` | v1.0 | 当前功能完整版（冻结） |
+| `dev2` | v1.1-dev | 开发分支（活跃开发） |
+
+开发流程：`dev2` 开发 → 自测通过 → 合并到 `dev1` → 稳定后合并到 `main`。
+
 ## 架构
 
 ```
