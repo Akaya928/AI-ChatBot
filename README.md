@@ -21,12 +21,17 @@
 │   │   └── analyzer.ts     # 17种情绪识别
 │   └── remind/
 │       └── scheduler.ts    # 定时提醒 + 节日祝福
-├── web/                    # 控制面板（前后端分离）
+├── web/                    # 控制面板（Vue3 + Vite + Express）
 │   ├── server.js           # Express API 服务
-│   └── public/
-│       ├── index.html      # Vue3 SPA 入口
-│       ├── style.css       # 全局样式
-│       └── js/             # 页面组件 + API 封装
+│   ├── index.html          # Vite 入口
+│   └── src/                # Vue3 SFC 组件
+│       ├── App.vue         # 根组件（侧边栏 + 路由）
+│       ├── main.js         # Vue 应用入口
+│       ├── api.js          # API 封装 + Toast
+│       └── components/     # 页面组件
+│           ├── Dashboard.vue
+│           ├── Settings.vue
+│           └── Logs.vue
 ├── data/                   # 运行时数据
 │   ├── config.json         # 角色配置（面板可编辑）
 │   ├── memory.json         # 对话记忆 + 用户画像
@@ -94,14 +99,28 @@
 ### Web 控制面板
 - 仪表盘：NapCat/QQ 状态 + Bot 状态，一键启停
 - 设置：可视化编辑角色人设、API Key、模型参数
-- 日志：实时查看 Bot 运行日志
-- Vue3 + Vue Router，单页应用
+- 日志：实时查看 + 彩色分类 + 下载/清空 + 系统状态栏
+- Vue3 SFC + Vite 构建 + Express API，前后端分离
+
+## 技术栈
+
+| 层 | 技术 |
+|------|------|
+| Bot 语言 | TypeScript |
+| AI SDK | OpenAI SDK（兼容 DeepSeek / GPT） |
+| 前端框架 | Vue 3 + Vue Router |
+| 构建工具 | Vite |
+| 后端服务 | Express（Node.js） |
+| 数据存储 | JSON 文件（后续迁移 SQLite/PostgreSQL） |
+| QQ 协议 | NapCat（OneBot v11 WebSocket） |
+| 日历 | lunar-javascript（农历动态计算） |
 
 ## 依赖
 
 - NapCat QQ 框架：提供 OneBot v11 WebSocket 接口
-- DeepSeek API：默认 AI 模型（可切换 GPT-4o 等）
+- DeepSeek API：默认 AI 模型（兼容 OpenAI 格式）
 - Node.js 20+ + TypeScript
+- Vue 3 + Vite + Express
 
 ## 配置说明
 
@@ -183,11 +202,11 @@ BOT_WS_ENDPOINT=ws://127.0.0.1:6700
 ### 本地开发
 
 ```bash
-# 终端1：启动 Bot（热更新）
+# 终端1：启动 Bot（TypeScript 热更）
 npm run dev
 
-# 终端2：启动控制面板
-npm run panel     # 打开 http://localhost:5777
+# 终端2：启动面板（Vite 热更）
+npm run panel:dev    # 打开 http://localhost:3000，代理 /api 到 5777
 ```
 
 ### 日常使用（推荐）
