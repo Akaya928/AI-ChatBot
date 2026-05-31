@@ -40,7 +40,7 @@ function colorize() {
 }
 
 async function load() {
-  try { const d = await api.logs(); text.value = d.lines.join('\n'); colorize() } catch(e) {}
+  try { const d = await api.logs(); text.value = d.lines.join('\n'); colorize(); setTimeout(() => { const v = document.querySelector('.log-viewer'); if (v) v.scrollTop = v.scrollHeight }, 100) } catch(e) {}
 }
 async function checkStatus() {
   try { const d = await api.status(); status.value = { napcat: d.napcat.qq, bot: d.bot.running } } catch(e) {}

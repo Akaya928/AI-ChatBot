@@ -194,7 +194,7 @@ async function handleMessage(data: OneBotMessage): Promise<void> {
       text = extractText(messageArray);
     }
     if (!text) {
-      text = rawMessage;
+      text = rawMessage.replace(/\[CQ:[^\]]+\]/g, "").trim();
     }
 
     const isGroup = messageType === "group";
@@ -204,10 +204,15 @@ async function handleMessage(data: OneBotMessage): Promise<void> {
     let isAddressed: boolean;
 
     if (isGroup) {
+      const atMentionHit = BOT_SELF_ID && rawMessage.includes(`[CQ:at,qq=${BOT_SELF_ID}]`);
       const parsed = parseGroupMessage(text, memory);
-      if (!parsed.isAddressed) return;
+      if (!parsed.isAddressed && !atMentionHit) return;
       isAddressed = true;
-      userMessage = parsed.strippedText;
+      if (atMentionHit && !parsed.isAddressed) {
+        userMessage = text.replace(/\[CQ:at,qq=\d+\]/g, "").trim();
+      } else {
+        userMessage = parsed.strippedText;
+      }
       console.log(
         `[Group] 群${groupId} 用户${userId} 前缀:${parsed.matchedPrefix} 消息:${userMessage}`
       );
