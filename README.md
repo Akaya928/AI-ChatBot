@@ -189,9 +189,11 @@ BOT_WS_ENDPOINT=ws://127.0.0.1:6700
 
 ### NapCat 配置
 
-1. 确保 NapCat.Shell/ 目录存在（含 NapCatWinBootMain.exe 和 QQ 客户端）
-2. 确保 OneBot WebSocket 服务器端口为 6700
-3. 首次启动需扫码登录，之后可用快速登录
+1. 确保 NapCat 目录存在（含 `NapCatWinBootMain.exe` 和 QQ 客户端）
+2. 首次启动后访问 NapCat 网页面板 `http://localhost:6099/webui`
+3. 左侧「协议」→ 启用 OneBot v11 → 添加 WebSocket 服务端 → 端口 `6700`
+4. 首次启动需扫码登录，之后可用快速登录
+5. 如需自定义 NapCat 目录/QQ号，编辑 `.env` 中 `NAPCAT_DIR` 和 `BOT_SELF_ID`
 
 ### 最好朋友绑定
 
