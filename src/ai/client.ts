@@ -164,7 +164,7 @@ export class AIChatClient {
         .join("\n");
 
       const existingProfile = memory.getProfile();
-      const prompt = buildProfileExtractionPrompt(historyText, existingProfile);
+      const prompt = buildProfileExtractionPrompt(historyText, existingProfile, this.config.character.name);
 
       const response = await this.client.chat.completions.create({
         model: this.config.ai.model,
