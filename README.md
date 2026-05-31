@@ -180,20 +180,38 @@ BOT_WS_ENDPOINT=ws://127.0.0.1:6700
 
 ## 使用方式
 
+### 本地开发
+
 ```bash
-# 1. 启动 NapCat（双击或在终端运行）
-NapCat.Shell\NapCat.44498.Shell\napcat.quick.bat
-
-# 2. 扫码登录 QQ
-
-# 3. 启动 Bot
+# 终端1：启动 Bot（热更新）
 npm run dev
 
-# 4. 启动控制面板（可选）
-npm run panel     # 访问 http://localhost:5777
+# 终端2：启动控制面板
+npm run panel     # 打开 http://localhost:5777
+```
 
-# 5. 部署模式
-npm run build && node dist/index.js
+### 日常使用（推荐）
+
+1. 双击 `web\start.vbs` → 面板后台启动 + 自动打开浏览器
+2. 仪表盘点「启动 NapCat」→ 扫码登录 QQ
+3. 点「启动 Bot」→ Bot 开始工作
+
+之后面板后台持续运行，守护进程会自动维持 NapCat 和 Bot 在线。关闭计算机前无需手动停止。
+
+### 部署模式
+
+```bash
+npm run build
+node dist/index.js    # Bot
+node web/server.js    # 面板
+```
+
+### 停止服务
+
+面板仪表盘点击「关闭服务」，或：
+```bash
+taskkill /f /im node.exe    # 停止 Bot
+taskkill /f /im QQ.exe      # 停止 QQ
 ```
 
 ## 后续计划
