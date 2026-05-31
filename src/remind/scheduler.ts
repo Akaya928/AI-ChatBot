@@ -119,7 +119,6 @@ export function cancelReminder(id: string): boolean {
 }
 
 export function parseReminderIntent(text: string): { content: string; minutes: number } | null {
-  if (!text.includes("提醒")) return null;
   // 分钟后
   let m = text.match(/(\d+)\s*分钟后?[提醒我]*(.+)/);
   if (m) return { content: m[2].trim() || "待办事项", minutes: parseInt(m[1]) };
