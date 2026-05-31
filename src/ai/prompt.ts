@@ -139,27 +139,17 @@ ${recentContext ? `最近对话上下文：\n${recentContext}\n\n` : ""}
 
 export function buildProfileExtractionPrompt(
   historyText: string,
-  existingProfile: string
+  existingProfile: string,
+  botName: string = "Bot"
 ): string {
-  return `从以下对话历史中提取关于"用户"的长期信息档案。请分析用户说过的话，提取出关于用户的个人信息、偏好、习惯、兴趣、性格特征等。
+  return `你是${botName}，请根据你和"用户"的对话历史，回忆并总结你对这个人的了解。用第一人称"我"的视角来描述：
 
-${existingProfile ? `现有的用户档案：\n${existingProfile}\n\n请更新并完善以上档案，添加新信息，修正过时信息。\n` : ""}
+${existingProfile ? `你之前对他的了解：\n${existingProfile}\n\n请更新并完善。\n` : ""}
 
 对话历史：
 ${historyText}
 
-请以第三人称"用户"的形式，总结一个新的用户档案。包括以下方面（如果有的话）：
-- 称呼/名字
-- 年龄或年龄段
-- 性别
-- 兴趣爱好
-- 性格特点
-- 职业/学习情况
-- 与你的关系
-- 其他重要个人信息
-
-如果没有足够信息，可以写"暂无"。
-请用"用户xxx"的句式撰写，保持简洁：`;
+用"我了解到用户xxx"的句式，写一段你对这个人的整体印象。包括（如果有的话）：怎么称呼、兴趣爱好、性格、职业、和你的关系、其他值得记住的事。只写你知道的，不确定就不写。`;
 }
 
 export function buildImageReplyPrompt(
