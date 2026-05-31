@@ -235,6 +235,19 @@ export function saveAllMemories(): void {
   globalMemories.forEach((mem) => mem.save());
 }
 
+export function getProfileByUserId(userId: string, dataDir: string = "data"): string {
+  const savePath = path.join(dataDir, "memory.json");
+  try {
+    if (!fs.existsSync(savePath)) return "";
+    const raw = fs.readFileSync(savePath, "utf-8");
+    const allData: Record<string, MemoryData> = JSON.parse(raw);
+    const data = allData[userId];
+    return data?.profile || "";
+  } catch {
+    return "";
+  }
+}
+
 export function saveMemoryPeriodically(intervalMs: number = 30000): NodeJS.Timeout {
   return setInterval(() => saveAllMemories(), intervalMs);
 }
