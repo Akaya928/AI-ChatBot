@@ -26,9 +26,10 @@ function checkBot() { return new Promise(r => exec(`wmic process where "name='no
 
 const app = express();
 app.use(express.json());
+app.use(express.static(path.join(__dirname, 'dist')));
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.get('/', (r,s) => s.sendFile(path.join(__dirname,'public','index.html')));
+app.get('/', (r,s) => s.sendFile(path.join(__dirname, 'dist', 'index.html')));
 app.get('/api/status', async (r,s) => { const [n,b] = await Promise.all([checkNapCat(),checkBot()]); s.json({napcat:n,bot:b}); });
 app.get('/api/config', (r,s) => s.json(loadCfg()));
 app.post('/api/config', (r,s) => { saveCfg({...loadCfg(),...r.body}); s.json({ok:true}); });

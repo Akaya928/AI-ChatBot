@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "ts-node -r dotenv/config src/index.ts",
     "build": "tsc",
-    "panel": "node web/server.js"
+    "panel": "node web/server.js",
+    "panel:dev": "vite --config vite.config.ts",
+    "panel:build": "vite build --config vite.config.ts"
   },
   "dependencies": {
     "@koishijs/plugin-adapter-onebot": "^6.0.0",
@@ -26,6 +28,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
+    "@vitejs/plugin-vue": "^5.2.4",
     "ts-node": "^10.9.0",
     "typescript": "^5.0.0"
   }
