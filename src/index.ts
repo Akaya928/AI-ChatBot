@@ -5,6 +5,7 @@ import * as path from "path";
 import { getMemory, saveAllMemories, saveMemoryPeriodically, ConversationMemory, getProfileByUserId } from "./context/memory";
 import { AIChatClient, createAIChatClient } from "./ai/client";
 import { analyze } from "./emotion/analyzer";
+import { userEmotionToBotDelta, timeDecay, moodToStickerKeyword, describeMood } from "./ai/emotion-engine";
 import { describeImage, hasImageInMessage, extractImageUrlsFromMessage, initVisionClient } from "./ai/vision";
 import { getFaceForEmotion, pickFaceForResponse } from "./ai/emoji";
 import { getStickerSuggestion, searchSticker } from "./ai/sticker";
@@ -275,6 +276,16 @@ async function handleMessage(data: OneBotMessage): Promise<void> {
 
     const emotionResult = await analyze(userMessage);
     ts(`[Emotion] 情绪: ${emotionResult.emotion} (${emotionResult.description})`);
+
+    const botEmotion = memory.getBotEmotion();
+    const minutesSince = (Date.now() - botEmotion.updatedAt) / 60000;
+    if (minutesSince > 1) {
+      memory.updateBotEmotion(timeDecay(botEmotion, minutesSince));
+    }
+    const isBF = userId === config.character.bestFriend?.qq;
+    memory.updateBotEmotion(userEmotionToBotDelta(emotionResult.emotion, !!isBF));
+    const updatedMood = memory.getBotEmotion();
+    ts(`[BotMood] ${describeMood(updatedMood)} (V:${updatedMood.valence.toFixed(2)} A:${updatedMood.arousal.toFixed(2)})`);
 
     const qqInMsg = userMessage.match(/\d{5,11}/g);
     let extraContext = "";
