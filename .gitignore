@@ -4,7 +4,8 @@ data/logs/
 data/config.json
 data/memory.json
 data/reminders.json
+data/memory_backup.json
 .env
 *.vbs
 NapCat.Shell/
-开关/
+web/dist/
