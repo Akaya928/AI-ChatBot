@@ -6,9 +6,9 @@
 
 | 分支 | 版本 | 用途 |
 |------|------|------|
-| `main` | v1.0 | 生产正式版 |
-| `dev1` | v1.0 | 当前功能完整版（冻结） |
-| `dev2` | v1.1-dev | 开发分支（活跃开发） |
+| `main` | v1.2.0 | 生产正式版 |
+| `dev1` | v1.2.0 | 功能完整版 |
+| `dev2` | v1.2.0-dev | 活跃开发 |
 
 开发流程：`dev2` 开发 → 自测通过 → 合并到 `dev1` → 稳定后合并到 `main`。
 
@@ -251,6 +251,32 @@ node web/server.js    # 面板
 taskkill /f /im node.exe    # 停止 Bot
 taskkill /f /im QQ.exe      # 停止 QQ
 ```
+## 部署方案
+
+### 本地（当前）
+
+所有模块跑在同一台 Windows 电脑上：
+```
+本地 Windows
+├── NapCat + QQ（裸跑）
+├── Bot（npm run dev / node dist/index.js）
+├── Panel（node web/server.js）
+└── data/（JSON 文件）
+```
+启动：`npm run panel` → 仪表盘点启停按钮。
+
+### v2.0 云端（计划中）
+
+```
+Win VPS（腾讯云 4核8G, ~80 元/月）
+├── NapCat + QQ（裸跑）
+├── Docker
+│   ├── aichatbot-bot
+│   ├── aichatbot-panel
+│   └── postgres
+```
+
+**核心不变**：AI、记忆、技能、平台适配层全部可移植，换平台只换入口。Docker Compose 一键 `docker compose up -d` 即可。
 
 ## 版本路线
 
