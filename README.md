@@ -292,34 +292,24 @@ taskkill /f /im QQ.exe      # 停止 QQ
 
 ### v2.0 - 架构升级
 
-**启动条件**：
-- v1.x 稳定运行，无关键 Bug
-- 平台抽象层完成（`src/platforms/onebot.ts` 已就绪）
-- Bot 情绪引擎稳定（`emotion-engine.ts` 已就绪）
+**启动条件**：v1.2.0 稳定运行一周，无关键 Bug → 建 `dev3` 分支开动。
 
-**目标架构**：
-```
-src/
-├── core/           # 消息路由、事件总线
-├── ai/             # AI 模块（prompt/client/emotion/vision/calendar）
-├── memory/         # 记忆系统（短期+长期+关系网+数据库）
-├── skills/         # 技能插件（可独立启停）
-├── platforms/      # 平台适配器（OneBot/Discord/Telegram）
-└── utils/          # 工具函数
+**v1.2 已铺垫**：
+- ✅ 平台抽象层 `src/platforms/types.ts` + `onebot.ts`
+- ✅ 技能插件系统 `src/skills/registry.ts`
+- ✅ PAD Bot 情绪引擎 `src/ai/emotion-engine.ts`
+- ✅ 跨用户画像读取 `getProfileByUserId`
+- ✅ JSON 配置导入/导出
+- ✅ 模块化 Prompt（JSON 规则存储）
 
-web/
-├── server/         # Express 路由分层（routes/middleware/services）
-└── src/            # Vue3 前端（保持现有）
-```
+**v2.0 目标**：
 
-**v2.0 计划**：
-| 模块 | 方向 |
+| 阶段 | 内容 |
 |------|------|
-| 意图路由 | 闲聊 / 工作 双模切换 |
-| 知识库 RAG | 文档向量化检索 |
-| 工具调用 | 邮件/日程/天气 API |
-| 数据库 | SQLite/PostgreSQL |
-| 关系网 | 用户互动关系学习 |
-| Docker | 一键容器化部署 |
-| 多模态 | 语音/绘图 |
-| 统计看板 | 消息量/活跃/情感趋势 |
+| **架构重组** | `src/` 拆 `core/` `ai/` `memory/` `skills/` `platforms/` `utils/` |
+| **平台接入** | 挂载 OneBot 适配器 → `index.ts` 纯路由；新增 Discord/Telegram 适配器 |
+| **数据库** | `data/*.json` → SQLite（`src/memory/db.ts`） |
+| **工作引擎** | 意图路由 → 闲聊/工作双模；知识库 RAG；工具调用（邮件/日程/天气） |
+| **关系网** | 用户间互动自动学习 → `relationships` 表 |
+| **部署** | Docker Compose 一键启动：Bot + Panel + DB + NapCat |
+| **统计看板** | 消息量/活跃时段/情感趋势/用户排行 |
