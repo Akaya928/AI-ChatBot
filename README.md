@@ -290,20 +290,36 @@ taskkill /f /im QQ.exe      # 停止 QQ
 | 表情包系统（本地 JSON + 360 搜图兜底） | ✅ |
 | 平台抽象层（OneBot 适配器接口） | ✅ |
 
-### v2.0 - 工作引擎
+### v2.0 - 架构升级
 
+**启动条件**：
+- v1.x 稳定运行，无关键 Bug
+- 平台抽象层完成（`src/platforms/onebot.ts` 已就绪）
+- Bot 情绪引擎稳定（`emotion-engine.ts` 已就绪）
+
+**目标架构**：
+```
+src/
+├── core/           # 消息路由、事件总线
+├── ai/             # AI 模块（prompt/client/emotion/vision/calendar）
+├── memory/         # 记忆系统（短期+长期+关系网+数据库）
+├── skills/         # 技能插件（可独立启停）
+├── platforms/      # 平台适配器（OneBot/Discord/Telegram）
+└── utils/          # 工具函数
+
+web/
+├── server/         # Express 路由分层（routes/middleware/services）
+└── src/            # Vue3 前端（保持现有）
+```
+
+**v2.0 计划**：
 | 模块 | 方向 |
 |------|------|
-| 意图路由 | 闲聊 / 工作 双模切换，人格记忆共享 |
-| 知识库 RAG | 公司文档/行业手册向量化检索 |
-| 工具调用 | 发邮件(SMTP)、排日程(CalDAV)、查天气 |
-| 问题库 QA | 常见问题向量匹配 |
-| 行业助手 | 法律/医疗/代码规范等领域手册接入 |
-| 多模态 | 语音识别、语音回复、AI 绘画 |
-| 数据库 | data/*.json 迁移到 SQLite/PostgreSQL |
-| 服务器部署 | Win VPS + Docker：NapCat 裸跑，Bot/面板/DB 容器化 |
-| 全天在线 | 面板守护进程：凌晨 4 点刷新 QQ 登录态 |
-| 权限系统 | 群白名单、敏感词过滤、管理员指令 |
-| 统计看板 | 消息量、活跃时段、情感趋势、用户排行 |
-| 关系网 | 用户间互动关系自动学习 |
-| 容器化 | Docker 一键部署 |
+| 意图路由 | 闲聊 / 工作 双模切换 |
+| 知识库 RAG | 文档向量化检索 |
+| 工具调用 | 邮件/日程/天气 API |
+| 数据库 | SQLite/PostgreSQL |
+| 关系网 | 用户互动关系学习 |
+| Docker | 一键容器化部署 |
+| 多模态 | 语音/绘图 |
+| 统计看板 | 消息量/活跃/情感趋势 |
