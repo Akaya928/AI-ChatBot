@@ -50,6 +50,7 @@ export class AIChatClient {
       const isVeryFamiliar = memory.isVeryFamiliar(isQQBestFriend);
       const familiarity = memory.getFamiliarityLevel(isQQBestFriend);
       const nicknames = memory.getNicknames();
+      const userNicknames = memory.getUserNicknames();
       const userId = memory.getUserId();
 
       const emotionResult = "neutral";
@@ -62,7 +63,8 @@ export class AIChatClient {
         familiarity,
         isQQBestFriend,
         profile,
-        nicknames
+        nicknames,
+        userNicknames
       );
 
       const messages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [

@@ -11,6 +11,7 @@ interface MemoryData {
   shortTermHistory: ChatMessage[];
   profile: string;
   nicknames: string[];
+  userNicknames: string[];
   messageCount: number;
   topicSummary: string;
   bestFriendName: string;
@@ -29,6 +30,7 @@ export class ConversationMemory {
   private shortTermHistory: ChatMessage[] = [];
   private profile: string = "";
   private nicknames: string[] = [];
+  private userNicknames: string[] = [];
   private messageCount: number = 0;
   private topicSummary: string = "";
   private bestFriendName: string = "";
@@ -111,6 +113,17 @@ export class ConversationMemory {
 
   clearNicknames(): void {
     this.nicknames = [];
+    this.userNicknames = [];
+  }
+
+  addUserNickname(name: string): void {
+    if (name && !this.userNicknames.includes(name)) {
+      this.userNicknames.push(name);
+    }
+  }
+
+  getUserNicknames(): string[] {
+    return [...this.userNicknames];
   }
 
   private calcScore(skipDecay: boolean = false): number {
@@ -191,6 +204,7 @@ export class ConversationMemory {
         shortTermHistory: this.shortTermHistory.slice(-200),
         profile: this.profile,
         nicknames: this.nicknames,
+        userNicknames: this.userNicknames,
         messageCount: this.messageCount,
         topicSummary: this.topicSummary,
         bestFriendName: this.bestFriendName,
@@ -215,6 +229,7 @@ export class ConversationMemory {
       this.shortTermHistory = data.shortTermHistory || [];
       this.profile = data.profile || "";
       this.nicknames = data.nicknames || [];
+      this.userNicknames = data.userNicknames || [];
       this.messageCount = data.messageCount || 0;
       this.topicSummary = data.topicSummary || "";
       this.bestFriendName = data.bestFriendName || "";

@@ -12,29 +12,29 @@ const BOT_MAIN = path.join(ROOT, 'dist', 'index.js');
 const BOT_LOG = path.join(ROOT, 'data', 'logs', 'bot.log');
 const CONFIG_PATH = path.join(ROOT, 'data', 'config.json');
 const PANEL_PID = process.pid;
+let lastNapcatStart = 0;
 
-function loadCfg() { try { return JSON.parse(fs.readFileSync(CONFIG_PATH,'utf8')); } catch { return {}; } }
-function saveCfg(c) { fs.writeFileSync(CONFIG_PATH, JSON.stringify(c,null,2),'utf8'); }
 function checkNapCat() { return new Promise(r => exec('tasklist /fi "imagename eq QQ.exe" /fo csv /nh', (e,o) => r({ qq: (o||'').includes('QQ.exe') }))); }
 function checkBot() { return new Promise(r => exec('wmic process where "name=\'node.exe\' and commandline like \'%index.js%\'" get processid /format:csv', (e,o) => { const p = (o||'').trim().split('\n').filter(l=>l.includes(',')).map(l=>l.split(',').pop().trim()).filter(p=>p&&p!==String(PANEL_PID)); r({ running: p.length>0 }); })); }
 
 const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'dist')));
-app.use(express.static(path.join(__dirname, 'public')));
 app.get('/', (r,s) => s.sendFile(path.join(__dirname,'dist','index.html')));
 
 app.get('/api/status', async (r,s) => { const [n,b] = await Promise.all([checkNapCat(),checkBot()]); s.json({napcat:n,bot:b}); });
-app.get('/api/config', (r,s) => s.json(loadCfg()));
-app.post('/api/config', (r,s) => { saveCfg({...loadCfg(),...r.body}); s.json({ok:true}); });
+app.get('/api/config', (r,s) => s.json(JSON.parse(fs.readFileSync(CONFIG_PATH,'utf8'))));
+app.post('/api/config', (r,s) => { fs.writeFileSync(CONFIG_PATH, JSON.stringify({...JSON.parse(fs.readFileSync(CONFIG_PATH,'utf8')),...r.body}, null, 2), 'utf8'); s.json({ok:true}); });
 app.get('/api/logs', (r,s) => { try { s.json({lines:fs.readFileSync(BOT_LOG,'utf8').split('\n').slice(-200)}); } catch { s.json({lines:[]}); } });
 app.post('/api/logs/clear', (r,s) => { try { fs.writeFileSync(BOT_LOG,'','utf8'); s.json({ok:true}); } catch { s.json({ok:false}); } });
 
 app.post('/api/actions/napcat/start', async (r,s) => {
   const n = await checkNapCat();
   if (n.qq) return s.json({ok:true,msg:'NapCat already running'});
-  spawn(path.join(NAPCAT_DIR,'NapCatWinBootMain.exe'), [BOT_QQ], {cwd:NAPCAT_DIR,detached:true,windowsHide:true,stdio:'ignore'}).unref();
-  s.json({ok:true,msg:'NapCat starting...'});
+  if (Date.now() - lastNapcatStart < 10000) return s.json({ok:true,msg:'Wait 10s before retry'});
+  lastNapcatStart = Date.now();
+  spawn('cmd.exe', ['/c', 'start "NapCat" napcat.quick.bat'], {cwd:NAPCAT_DIR,detached:true,shell:true,stdio:'ignore'}).unref();
+  s.json({ok:true,msg:'NapCat started'});
 });
 app.post('/api/actions/napcat/stop', (r,s) => {
   exec('taskkill /f /im QQ.exe 2>nul & taskkill /f /im NapCatWinBootMain.exe 2>nul', () => s.json({ok:true,msg:'NapCat stopped'}));
@@ -55,17 +55,3 @@ app.post('/api/actions/bot/stop', (r,s) => {
 });
 
 app.listen(PORT, () => console.log('[Panel] http://localhost:'+PORT));
-
-setInterval(() => {
-  const now = new Date();
-  const is4am = now.getHours() === 4 && now.getMinutes() === 0;
-  checkNapCat().then(n => {
-    if (!n.qq || is4am) {
-      exec('taskkill /f /im QQ.exe 2>nul & taskkill /f /im NapCatWinBootMain.exe 2>nul', () => {
-        setTimeout(() => {
-          spawn(path.join(NAPCAT_DIR,'NapCatWinBootMain.exe'), [BOT_QQ], {cwd:NAPCAT_DIR,detached:true,windowsHide:true,stdio:'ignore'}).unref();
-        }, 5000);
-      });
-    }
-  });
-}, 60000);

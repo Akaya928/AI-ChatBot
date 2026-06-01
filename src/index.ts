@@ -47,7 +47,7 @@ function loadAIConfig(): AIConfig {
       temperature: 0.8,
     },
     memory: {
-      profileExtractionInterval: 10,
+      profileExtractionInterval: 3,
       summaryInterval: 20,
       shortTermLimit: 20,
       profileExtractionLimit: 50,
@@ -73,6 +73,7 @@ let reconnectAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = 50;
 const RECONNECT_DELAY = 5000;
 const processedMessages = new Set<string | number>();
+const lastGroupSeen: Record<string, string> = {};
 
 function getPrefixes(memory: ConversationMemory): string[] {
   const customNicknames = memory.getNicknames();
@@ -112,7 +113,9 @@ function parseGroupMessage(
   for (const prefix of getPrefixes(memory)) {
     if (text.includes(prefix)) {
       const idx = text.indexOf(prefix);
-      let stripped = text.substring(idx + prefix.length).trim();
+      const before = text.substring(0, idx);
+      const after = text.substring(idx + prefix.length);
+      let stripped = (before + " " + after).trim().replace(/\s+/g, " ");
       stripped = stripped.replace(/^[~～!！。，,\s]+/, "").trim();
       return { isAddressed: true, strippedText: stripped, matchedPrefix: prefix };
     }
@@ -130,17 +133,9 @@ function parseGroupMessage(
   return { isAddressed: false, strippedText: text, matchedPrefix: "" };
 }
 
-function detectAndStoreNickname(text: string, memory: ConversationMemory): void {
-  // 暂停自动检测，避免误判。手动说 "以后叫我xxx" 才触发。
-  if (!text) return;
-  const m = text.match(/(?:以后|以后就|那就)叫你?[「『"']?(.{1,5})[」』"']?[吧好了啦]?[!！。.]?$/);
-  if (m && m[1].trim().length >= 1) {
-    const name = m[1].trim();
-    if (!["你","我","他","她","它"].includes(name)) {
-      memory.addNickname(name);
-      console.log(`[Nickname] 记住了昵称: ${name}`);
-    }
-  }
+function detectAndStoreNickname(text: string, memory: ConversationMemory, _others?: string[]): void {
+  // v1.2: 不再用 regex 解析，昵称/称呼信息由长期画像自然提取。
+  // userNicknames 字段保留，后续从画像中结构化抽取。
 }
 
 interface OneBotMessage {
@@ -223,9 +218,13 @@ async function handleMessage(data: OneBotMessage): Promise<void> {
       if (atMentionHit) {
         atOthersList = [userId, ...atOthersList];
       }
+      if (atOthersList.length === 0) {
+        atOthersList = [userId];
+      }
       console.log(
         `[Group] 群${groupId} 用户${userId} 前缀:${parsed.matchedPrefix} 消息:${userMessage}`
       );
+      if (groupId) lastGroupSeen[userId] = groupId;
     } else {
       isAddressed = true;
       userMessage = text;
@@ -272,7 +271,7 @@ async function handleMessage(data: OneBotMessage): Promise<void> {
       }
     }
 
-    detectAndStoreNickname(userMessage, memory);
+    detectAndStoreNickname(userMessage, memory, atOthersList);
 
     const emotionResult = await analyze(userMessage);
     ts(`[Emotion] 情绪: ${emotionResult.emotion} (${emotionResult.description})`);
@@ -286,6 +285,8 @@ async function handleMessage(data: OneBotMessage): Promise<void> {
           const theirProfile = getProfileByUserId(qq);
           if (theirProfile) {
             profiles.push(`你对${qq}的了解：${theirProfile}`);
+          } else {
+            profiles.push(`${qq}是你还不认识的人，不要编造关于他的信息`);
           }
         }
       }
@@ -376,7 +377,7 @@ function sendSticker(data: OneBotMessage, stickerPath: string, stickerName: stri
 
 function connectWebSocket(): void {
   if (ws) {
-    try { ws.removeAllListeners(); ws.close(); } catch {}
+    try { ws.removeAllListeners(); ws.on('error', () => {}); ws.close(); } catch {}
     ws = null;
   }
   console.log(`[Bot] 正在连接 WebSocket: ${WS_ENDPOINT}`);
@@ -532,6 +533,13 @@ reminderSkill.init = () => {
         action: "send_private_msg",
         params: { user_id: Number(userId), message: content },
       }));
+      const gid = lastGroupSeen[userId];
+      if (gid) {
+        ws.send(JSON.stringify({
+          action: "send_group_msg",
+          params: { group_id: Number(gid), message: `[CQ:at,qq=${userId}] ${content}` },
+        }));
+      }
     }
   }, config.character.bestFriend?.qq, async (holiday: string): Promise<string> => {
     const client = aiClient.rawClient();
