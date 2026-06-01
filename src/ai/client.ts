@@ -4,6 +4,7 @@ import { buildSystemPrompt, buildTopicSummaryPrompt, buildProfileExtractionPromp
 import { getDateContext } from "./calendar";
 import { getFaceForEmotion, pickFaceForResponse } from "./emoji";
 import { getStickerSuggestion } from "./sticker";
+import { moodToStickerKeyword, describeMood } from "./emotion-engine";
 
 let openaiClient: OpenAI | null = null;
 
@@ -52,13 +53,12 @@ export class AIChatClient {
       const nicknames = memory.getNicknames();
       const userNicknames = memory.getUserNicknames();
       const userId = memory.getUserId();
-
-      const emotionResult = "neutral";
+      const botMood = memory.getBotEmotion();
 
       const systemPrompt = buildSystemPrompt(
         this.config,
         topicSummary,
-        emotionResult,
+        describeMood(botMood),
         isVeryFamiliar,
         familiarity,
         isQQBestFriend,
@@ -105,11 +105,11 @@ export class AIChatClient {
       }
 
       const stickerSuggestion = getStickerSuggestion({
-        emotion: emotionResult,
+        emotion: moodToStickerKeyword(botMood),
         userMessage: userMessage,
       });
 
-      const face = getFaceForEmotion(emotionResult);
+      const face = getFaceForEmotion(moodToStickerKeyword(botMood));
 
       memory.addMessage("user", userMessage);
       memory.addMessage("assistant", reply);

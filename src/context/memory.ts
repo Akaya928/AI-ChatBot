@@ -1,10 +1,16 @@
-import * as fs from "fs";
+﻿import * as fs from "fs";
 import * as path from "path";
 
 export interface ChatMessage {
   role: "user" | "assistant" | "system";
   content: string;
   name?: string;
+}
+
+export interface BotEmotion {
+  valence: number;
+  arousal: number;
+  updatedAt: number;
 }
 
 interface MemoryData {
@@ -14,11 +20,11 @@ interface MemoryData {
   userNicknames: string[];
   messageCount: number;
   topicSummary: string;
-  bestFriendName: string;
   totalTurns: number;
   deepConvCount: number;
   activeDays: string[];
   lastActive: number;
+  botEmotion: BotEmotion;
 }
 
 function today(): string {
@@ -40,6 +46,7 @@ export class ConversationMemory {
   private lastActive: number = 0;
   private skipDecay: boolean = false;
   private savePath: string;
+  private botEmotion: BotEmotion = { valence: 0, arousal: 0, updatedAt: Date.now() };
 
   setSkipDecay(v: boolean): void { this.skipDecay = v; }
 
@@ -81,7 +88,7 @@ export class ConversationMemory {
   getHistoryAsText(limit: number = 50): string {
     return this.shortTermHistory
       .slice(-limit)
-      .map((m) => `${m.role === "user" ? "用户" : "Bot"}: ${m.content}`)
+      .map((m) => `${m.role === "user" ? "鐢ㄦ埛" : "Bot"}: ${m.content}`)
       .join("\n");
   }
 
@@ -126,61 +133,44 @@ export class ConversationMemory {
     return [...this.userNicknames];
   }
 
-  private calcScore(skipDecay: boolean = false): number {
-    const msgScore = Math.min(this.messageCount * 0.04, 40);
-    const dayScore = Math.min(this.activeDays.length * 1.5, 30);
-    const deepScore = Math.min(this.deepConvCount * 3, 20);
-
-    if (skipDecay) {
-      return Math.round(msgScore + dayScore + deepScore + 10);
-    }
-
-    const daysSince = this.activeDays.length > 0
-      ? (Date.now() - this.lastActive) / (1000 * 60 * 60 * 24)
-      : 999;
-    const decay = Math.min(daysSince * 2, 30);
-    const activePenalty = this.lastActive > 0 && daysSince > 7 ? decay : 0;
-
-    let recency = 0;
-    if (daysSince < 7) recency = 10;
-    else if (daysSince < 14) recency = 6;
-    else if (daysSince < 30) recency = 3;
-
-    let score = Math.round(msgScore + dayScore + deepScore + recency - activePenalty);
-    return Math.max(0, score);
+  getBotEmotion(): BotEmotion {
+    return { ...this.botEmotion };
   }
 
-  getFamiliarityLevel(skipDecay: boolean = false): string {
-    const score = this.calcScore(skipDecay);
-    if (score < 15) return "陌生人";
-    if (score < 40) return "认识的人";
-    if (score < 60) return "普通朋友";
-    if (score < 80) return "好朋友";
-    return "很熟的朋友";
+  updateBotEmotion(delta: Partial<BotEmotion>): void {
+    this.botEmotion.valence = Math.max(-1, Math.min(1, this.botEmotion.valence + (delta.valence || 0)));
+    this.botEmotion.arousal = Math.max(-1, Math.min(1, this.botEmotion.arousal + (delta.arousal || 0)));
+    this.botEmotion.updatedAt = Date.now();
   }
 
-  getFamiliarityScore(skipDecay: boolean = false): number {
-    return this.calcScore(skipDecay);
-  }
+  getUserId(): string { return this.userId; }
 
   isVeryFamiliar(skipDecay: boolean = false): boolean {
     return this.calcScore(skipDecay) >= 80;
   }
 
-  getMessageCount(): number {
-    return this.messageCount;
+  getFamiliarityLevel(skipDecay: boolean = false): string {
+    const score = this.calcScore(skipDecay);
+    if (score < 15) return "stranger";
+    if (score < 40) return "acquaintance";
+    if (score < 60) return "friend";
+    if (score < 80) return "good friend";
+    return "close friend";
   }
 
-  getUserId(): string {
-    return this.userId;
-  }
-
-  getBestFriendName(): string {
-    return this.bestFriendName;
-  }
-
-  setBestFriendName(name: string): void {
-    if (name && name.trim()) this.bestFriendName = name.trim();
+  private calcScore(skipDecay: boolean = false): number {
+    const msgScore = Math.min(this.messageCount * 0.04, 40);
+    const dayScore = Math.min(this.activeDays.length * 1.5, 30);
+    const deepScore = Math.min(this.deepConvCount * 3, 20);
+    if (skipDecay) return Math.round(msgScore + dayScore + deepScore + 10);
+    const daysSince = this.activeDays.length > 0 ? (Date.now() - this.lastActive) / 86400000 : 999;
+    const decay = Math.min(daysSince * 2, 30);
+    const activePenalty = this.lastActive > 0 && daysSince > 7 ? decay : 0;
+    let recency = 0;
+    if (daysSince < 7) recency = 10;
+    else if (daysSince < 14) recency = 6;
+    else if (daysSince < 30) recency = 3;
+    return Math.max(0, Math.round(msgScore + dayScore + deepScore + recency - activePenalty));
   }
 
   clearHistory(): void {
@@ -205,9 +195,9 @@ export class ConversationMemory {
         profile: this.profile,
         nicknames: this.nicknames,
         userNicknames: this.userNicknames,
+        botEmotion: this.botEmotion,
         messageCount: this.messageCount,
         topicSummary: this.topicSummary,
-        bestFriendName: this.bestFriendName,
         totalTurns: this.totalTurns,
         deepConvCount: this.deepConvCount,
         activeDays: this.activeDays,
@@ -215,7 +205,7 @@ export class ConversationMemory {
       };
       fs.writeFileSync(this.savePath, JSON.stringify(allData, null, 2), "utf-8");
     } catch (err) {
-      console.error("[Memory] 保存记忆失败:", err);
+      console.error("[Memory] 淇濆瓨璁板繂澶辫触:", err);
     }
   }
 
@@ -230,16 +220,16 @@ export class ConversationMemory {
       this.profile = data.profile || "";
       this.nicknames = data.nicknames || [];
       this.userNicknames = data.userNicknames || [];
+      this.botEmotion = data.botEmotion || { valence: 0, arousal: 0, updatedAt: Date.now() };
       this.messageCount = data.messageCount || 0;
       this.topicSummary = data.topicSummary || "";
-      this.bestFriendName = data.bestFriendName || "";
       this.totalTurns = data.totalTurns || 0;
       this.deepConvCount = data.deepConvCount || 0;
       this.activeDays = data.activeDays || [];
       this.lastActive = data.lastActive || 0;
-      console.log(`[Memory] 已加载用户 ${this.userId} 的记忆 (${this.messageCount} 条消息, 好感度 ${this.skipDecay ? 100 : this.calcScore()})`);
+      console.log("[Memory] loaded user " + this.userId + " (" + this.messageCount + " msgs, score " + (this.skipDecay ? 100 : this.calcScore()) + ")");
     } catch (err) {
-      console.error("[Memory] 加载记忆失败:", err);
+      console.error("[Memory] 鍔犺浇璁板繂澶辫触:", err);
     }
   }
 }
